@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>who are you?</title>
+  <title>poetry project</title>
   <style>
     * {
       margin: 0;
@@ -14,6 +14,10 @@
     body {
       background: #e0e0e0;
       font-family: 'Courier New', monospace;
+    }
+
+    /* PHASE 1: CAPTURE */
+    #capturePhase {
       padding: 40px 20px;
     }
     
@@ -65,24 +69,160 @@
     button:hover {
       background: #555;
     }
+
+    /* PHASE 2: POETRY */
+    #poetryPhase {
+      display: none;
+      background: #d0d0d0;
+      overflow: auto;
+      position: relative;
+      min-height: 100vh;
+    }
+    
+    #timer {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 48px;
+      font-weight: bold;
+      color: #333;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px 30px;
+      border: 3px solid #333;
+      z-index: 1000;
+    }
+    
+    #poetryCanvas {
+      width: 200vw;
+      height: 200vh;
+      position: relative;
+    }
+    
+    #answerBox {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      min-height: 200px;
+      background: white;
+      border: 4px solid #333;
+      padding: 20px;
+      z-index: 10;
+    }
+    
+    #answerBox h2 {
+      font-size: 24px;
+      margin-bottom: 15px;
+      font-weight: normal;
+    }
+    
+    #answerArea {
+      min-height: 120px;
+      border: 2px dashed #666;
+      padding: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-content: flex-start;
+    }
+    
+    .tile {
+      background: #222;
+      color: white;
+      padding: 8px 16px;
+      font-size: 18px;
+      cursor: grab;
+      user-select: none;
+      display: inline-block;
+      border: 2px solid #333;
+      position: absolute;
+    }
+    
+    .tile:active {
+      cursor: grabbing;
+    }
+    
+    .tile.in-box {
+      position: relative;
+      cursor: grab;
+    }
+    
+    #warning {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 32px;
+      color: #333;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px 50px;
+      border: 4px solid #333;
+      display: none;
+      z-index: 2000;
+    }
+    
+    #doneBtn {
+      margin-top: 15px;
+      padding: 12px 30px;
+      font-size: 18px;
+      font-family: 'Courier New', monospace;
+      background: #333;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    
+    #doneBtn:hover {
+      background: #555;
+    }
+
+    #poetryCanvasElement {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>who are you?</h1>
-    <input type="text" id="nameInput" placeholder="you type your name here">
+  <!-- PHASE 1: CAPTURE -->
+  <div id="capturePhase">
+    <div class="container">
+      <h1>who are you?</h1>
+      <input type="text" id="nameInput" placeholder="you type your name here">
+      
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+      
+      <button id="captureBtn">take your picture</button>
+    </div>
+  </div>
+
+  <!-- PHASE 2: POETRY -->
+  <div id="poetryPhase">
+    <div id="timer">60</div>
+    <div id="warning">you can't take back what you said</div>
     
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas"></canvas>
-    
-    <button id="captureBtn">take your picture</button>
+    <div id="poetryCanvas">
+      <div id="answerBox">
+        <h2>what do you have to say?</h2>
+        <div id="answerArea"></div>
+        <button id="doneBtn">im done</button>
+      </div>
+    </div>
+    <canvas id="poetryCanvasElement"></canvas>
   </div>
 
   <script>
+    // PHASE 1: CAPTURE PHOTO
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const captureBtn = document.getElementById('captureBtn');
     const nameInput = document.getElementById('nameInput');
+    const capturePhase = document.getElementById('capturePhase');
+    const poetryPhase = document.getElementById('poetryPhase');
+
+    let userName = '';
+    let userPhoto = '';
 
     // Start camera
     navigator.mediaDevices.getUserMedia({ video: true, audio: false })
@@ -93,7 +233,7 @@
         console.error('Camera error:', err);
       });
 
-    // Capture photo
+    // Capture photo and move to poetry phase
     captureBtn.addEventListener('click', function() {
       const name = nameInput.value.trim();
       
@@ -107,11 +247,266 @@
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
       
-      const photoData = canvas.toDataURL('image/jpeg');
-      
+      userPhoto = canvas.toDataURL('image/jpeg');
+      userName = name;
+
       console.log('Name:', name);
       console.log('Photo captured');
+
+      // Stop camera
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach(function(track) {
+          track.stop();
+        });
+      }
+
+      // Switch to poetry phase
+      capturePhase.style.display = 'none';
+      poetryPhase.style.display = 'block';
+      initPoetryPhase();
     });
+
+    // PHASE 2: POETRY TILES
+    function initPoetryPhase() {
+      const words = [
+        'i', 'you', 'we', 'they', 'the', 'a', 'an', 'and', 'but', 'or', 'if', 'when', 'where',
+        'is', 'am', 'are', 'was', 'were', 'will', 'would', 'could', 'should', 'can', 'cannot',
+        'with', 'without', 'of', 'in', 'on', 'at', 'to', 'from', 'for', 'about', 'like', 'as',
+        'not', 'never', 'always', 'sometimes', 'maybe', 'almost', 'still', 'yet', 'already',
+        'ocean', 'sea', 'river', 'water', 'wave', 'tide', 'storm', 'rain', 'snow', 'ice',
+        'sky', 'cloud', 'star', 'moon', 'sun', 'light', 'dark', 'shadow', 'silence', 'sound',
+        'body', 'hand', 'heart', 'mind', 'soul', 'breath', 'bone', 'blood', 'skin', 'eye',
+        'home', 'door', 'window', 'room', 'wall', 'mirror', 'glass', 'bridge', 'road', 'path',
+        'time', 'moment', 'hour', 'day', 'night', 'dawn', 'dusk', 'tomorrow', 'yesterday', 'memory',
+        'dream', 'sleep', 'wake', 'forget', 'remember', 'know', 'understand', 'think', 'feel', 'wonder',
+        'love', 'hate', 'fear', 'hope', 'pain', 'joy', 'sorrow', 'grief', 'anger', 'peace',
+        'empty', 'full', 'heavy', 'light', 'soft', 'hard', 'cold', 'warm', 'bright', 'dim',
+        'broken', 'whole', 'lost', 'found', 'open', 'closed', 'deep', 'shallow', 'infinite', 'finite',
+        'become', 'remain', 'change', 'stay', 'leave', 'return', 'arrive', 'depart', 'begin', 'end',
+        'break', 'mend', 'build', 'destroy', 'create', 'erase', 'hold', 'release', 'keep', 'lose',
+        'speak', 'whisper', 'shout', 'listen', 'hear', 'see', 'watch', 'look', 'touch', 'reach'
+      ];
+
+      const poetryCanvas = document.getElementById('poetryCanvas');
+      const answerArea = document.getElementById('answerArea');
+      const timer = document.getElementById('timer');
+      const warning = document.getElementById('warning');
+      const doneBtn = document.getElementById('doneBtn');
+      
+      let timeLeft = 60;
+      let selectedWords = [];
+      let draggedTile = null;
+      let offsetX, offsetY;
+      let fromAnswerBox = false;
+
+      // Create tiles randomly positioned
+      const canvasWidth = window.innerWidth * 2;
+      const canvasHeight = window.innerHeight * 2;
+      const centerX = canvasWidth / 2;
+      const centerY = canvasHeight / 2;
+      const excludeRadius = 400;
+
+      words.forEach(function(word) {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.textContent = word;
+        tile.dataset.word = word;
+        
+        // Random position avoiding center
+        let x, y;
+        do {
+          x = Math.random() * (canvasWidth - 200) + 100;
+          y = Math.random() * (canvasHeight - 200) + 100;
+        } while (Math.sqrt((x - centerX) * (x - centerX) + (y - centerY) * (y - centerY)) < excludeRadius);
+        
+        tile.style.left = x + 'px';
+        tile.style.top = y + 'px';
+        tile.style.transform = 'rotate(' + ((Math.random() - 0.5) * 10) + 'deg)';
+        
+        poetryCanvas.appendChild(tile);
+        
+        tile.addEventListener('mousedown', startDrag);
+      });
+
+      function startDrag(e) {
+        draggedTile = e.target;
+        fromAnswerBox = draggedTile.classList.contains('in-box');
+        
+        if (fromAnswerBox) {
+          const index = selectedWords.indexOf(draggedTile.dataset.word);
+          selectedWords.splice(index, 1);
+          draggedTile.classList.remove('in-box');
+          poetryCanvas.appendChild(draggedTile);
+        }
+        
+        const rect = draggedTile.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        
+        draggedTile.style.position = 'fixed';
+        draggedTile.style.zIndex = '1000';
+        moveTile(e);
+        
+        document.addEventListener('mousemove', moveTile);
+        document.addEventListener('mouseup', stopDrag);
+      }
+
+      function moveTile(e) {
+        if (!draggedTile) return;
+        draggedTile.style.left = (e.clientX - offsetX) + 'px';
+        draggedTile.style.top = (e.clientY - offsetY) + 'px';
+      }
+
+      function stopDrag(e) {
+        if (!draggedTile) return;
+        
+        const boxRect = answerArea.getBoundingClientRect();
+        const tileRect = draggedTile.getBoundingClientRect();
+        
+        const isOverBox = (
+          tileRect.left < boxRect.right &&
+          tileRect.right > boxRect.left &&
+          tileRect.top < boxRect.bottom &&
+          tileRect.bottom > boxRect.top
+        );
+        
+        if (isOverBox) {
+          // Add to answer box
+          draggedTile.style.position = 'relative';
+          draggedTile.style.left = 'auto';
+          draggedTile.style.top = 'auto';
+          draggedTile.style.transform = 'none';
+          draggedTile.classList.add('in-box');
+          answerArea.appendChild(draggedTile);
+          selectedWords.push(draggedTile.dataset.word);
+        } else if (fromAnswerBox) {
+          // Show warning
+          warning.style.display = 'block';
+          setTimeout(function() {
+            warning.style.display = 'none';
+          }, 1500);
+          
+          // Put back in answer box
+          draggedTile.style.position = 'relative';
+          draggedTile.style.left = 'auto';
+          draggedTile.style.top = 'auto';
+          draggedTile.style.transform = 'none';
+          draggedTile.classList.add('in-box');
+          answerArea.appendChild(draggedTile);
+          selectedWords.push(draggedTile.dataset.word);
+        } else {
+          // Return to canvas
+          draggedTile.style.position = 'absolute';
+          draggedTile.style.left = (e.clientX + window.scrollX - offsetX) + 'px';
+          draggedTile.style.top = (e.clientY + window.scrollY - offsetY) + 'px';
+        }
+        
+        document.removeEventListener('mousemove', moveTile);
+        document.removeEventListener('mouseup', stopDrag);
+        draggedTile = null;
+      }
+
+      // Timer countdown
+      const countdown = setInterval(function() {
+        timeLeft--;
+        timer.textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+          clearInterval(countdown);
+          submitPoetry();
+        }
+      }, 1000);
+
+      doneBtn.addEventListener('click', function() {
+        clearInterval(countdown);
+        submitPoetry();
+      });
+
+      function submitPoetry() {
+        // Capture the answer box as an image
+        const answerBox = document.getElementById('answerBox');
+        const poetryCanvasElement = document.getElementById('poetryCanvasElement');
+        
+        poetryCanvasElement.width = answerBox.offsetWidth;
+        poetryCanvasElement.height = answerBox.offsetHeight;
+        
+        const ctx = poetryCanvasElement.getContext('2d');
+        
+        // Draw white background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, poetryCanvasElement.width, poetryCanvasElement.height);
+        
+        // Draw border
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(0, 0, poetryCanvasElement.width, poetryCanvasElement.height);
+        
+        // Draw title
+        ctx.fillStyle = '#333';
+        ctx.font = '24px Courier New';
+        ctx.fillText('what do you have to say?', 20, 40);
+        
+        // Draw dashed box
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.strokeRect(20, 60, poetryCanvasElement.width - 40, poetryCanvasElement.height - 140);
+        ctx.setLineDash([]);
+        
+        // Draw words
+        ctx.fillStyle = '#222';
+        ctx.font = '18px Courier New';
+        let x = 30;
+        let y = 90;
+        const lineHeight = 40;
+        const maxWidth = poetryCanvasElement.width - 60;
+        
+        selectedWords.forEach(function(word) {
+          const wordWidth = ctx.measureText(word).width + 32;
+          
+          if (x + wordWidth > maxWidth) {
+            x = 30;
+            y += lineHeight;
+          }
+          
+          // Draw tile background
+          ctx.fillStyle = '#222';
+          ctx.fillRect(x, y - 20, wordWidth - 8, 32);
+          
+          // Draw tile border
+          ctx.strokeStyle = '#333';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x, y - 20, wordWidth - 8, 32);
+          
+          // Draw text
+          ctx.fillStyle = 'white';
+          ctx.fillText(word, x + 8, y);
+          
+          x += wordWidth;
+        });
+        
+        const poetryImage = poetryCanvasElement.toDataURL('image/jpeg');
+        
+        // Send both images to server
+        fetch('/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            name: userName, 
+            photo: userPhoto,
+            poetry: poetryImage,
+            words: selectedWords
+          })
+        }).then(function() {
+          console.log('Submitted!');
+          // Reset for next person
+          location.reload();
+        });
+      }
+
+      // Center the view on load
+      window.scrollTo(canvasWidth / 2 - window.innerWidth / 2, canvasHeight / 2 - window.innerHeight / 2);
+    }
   </script>
 </body>
 </html>

@@ -16,22 +16,32 @@ if (!fs.existsSync('submissions.json')) {
 
 // Store submissions
 app.post('/submit', (req, res) => {
-  const { name, photo } = req.body;
+  const { name, photo, poetry, words } = req.body;
   
-  // Save photo as image file
-  const base64Data = photo.replace(/^data:image\/jpeg;base64,/, '');
-  const filename = `${name.replace(/[^a-z0-9]/gi, '_')}.jpg`;
+  // Save photo
+  const photoBase64 = photo.replace(/^data:image\/jpeg;base64,/, '');
+  const photoFilename = `${name.replace(/[^a-z0-9]/gi, '_')}_photo.jpg`;
+  fs.writeFileSync(path.join(__dirname, 'photos', photoFilename), photoBase64, 'base64');
   
-  fs.writeFileSync(path.join(__dirname, 'photos', filename), base64Data, 'base64');
+  // Save poetry image
+  const poetryBase64 = poetry.replace(/^data:image\/jpeg;base64,/, '');
+  const poetryFilename = `${name.replace(/[^a-z0-9]/gi, '_')}_poetry.jpg`;
+  fs.writeFileSync(path.join(__dirname, 'photos', poetryFilename), poetryBase64, 'base64');
   
   // Log to submissions.json
   const submissions = JSON.parse(fs.readFileSync('submissions.json', 'utf8') || '[]');
-  submissions.push({ name, filename });
+  submissions.push({ 
+    name, 
+    photoFilename, 
+    poetryFilename,
+    words 
+  });
   fs.writeFileSync('submissions.json', JSON.stringify(submissions, null, 2));
   
   res.json({ success: true });
 });
 
-app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
