@@ -20,6 +20,28 @@ app.get('/submissions', (req, res) => {
   res.json(submissions);
 });
 
+// Get all image URLs from Cloudinary
+app.get('/image-urls', async (req, res) => {
+  try {
+    const result = await cloudinary.api.resources({
+      type: 'upload',
+      prefix: 'poetry-project/',
+      max_results: 500
+    });
+    
+    res.json({
+      images: result.resources.map(img => ({
+        url: img.secure_url,
+        public_id: img.public_id,
+        filename: img.public_id.split('/').pop() + '.jpg'
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching images:', error);
+    res.status(500).json({ error: 'Failed to fetch images' });
+  }
+});
+
 // Store submissions
 app.post('/submit', async (req, res) => {
   try {
