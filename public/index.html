@@ -423,49 +423,28 @@
       });
 
       function submitPoetry() {
-        // Capture the answer box as an image
-        const answerBox = document.getElementById('answerBox');
         const poetryCanvasElement = document.getElementById('poetryCanvasElement');
-        
-        poetryCanvasElement.width = answerBox.offsetWidth;
-        poetryCanvasElement.height = answerBox.offsetHeight;
-        
         const ctx = poetryCanvasElement.getContext('2d');
         
-        // Draw white background
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, poetryCanvasElement.width, poetryCanvasElement.height);
+        // Set canvas size - make it wide enough for all words
+        poetryCanvasElement.width = 800;
+        poetryCanvasElement.height = 200;
         
-        // Draw border
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(0, 0, poetryCanvasElement.width, poetryCanvasElement.height);
+        // No background fill - transparent!
         
-        // Draw title
-        ctx.fillStyle = '#333';
-        ctx.font = '24px Courier New';
-        ctx.fillText('what do you have to say?', 20, 40);
-        
-        // Draw dashed box
-        ctx.strokeStyle = '#666';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
-        ctx.strokeRect(20, 60, poetryCanvasElement.width - 40, poetryCanvasElement.height - 140);
-        ctx.setLineDash([]);
-        
-        // Draw words
+        // Draw words only
         ctx.fillStyle = '#222';
         ctx.font = '18px Courier New';
-        let x = 30;
-        let y = 90;
+        let x = 10;
+        let y = 30;
         const lineHeight = 40;
-        const maxWidth = poetryCanvasElement.width - 60;
+        const maxWidth = 780;
         
         selectedWords.forEach(function(word) {
           const wordWidth = ctx.measureText(word).width + 32;
           
           if (x + wordWidth > maxWidth) {
-            x = 30;
+            x = 10;
             y += lineHeight;
           }
           
@@ -485,28 +464,27 @@
           x += wordWidth;
         });
         
-        const poetryImage = poetryCanvasElement.toDataURL('image/jpeg');
+        const poetryImage = poetryCanvasElement.toDataURL('image/png');
         
         // Send both images to server
-       // Send both images to server
-fetch('/submit', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ 
-    name: userName, 
-    photo: userPhoto,
-    poetry: poetryImage,
-    words: selectedWords
-  })
-}).then(function(response) {
-  console.log('Response:', response);
-  return response.json();
-}).then(function(data) {
-  console.log('Submitted successfully!', data);
-  location.reload();
-}).catch(function(error) {
-  console.error('Submission error:', error);
-});
+        fetch('/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            name: userName, 
+            photo: userPhoto,
+            poetry: poetryImage,
+            words: selectedWords
+          })
+        }).then(function(response) {
+          console.log('Response:', response);
+          return response.json();
+        }).then(function(data) {
+          console.log('Submitted successfully!', data);
+          location.reload();
+        }).catch(function(error) {
+          console.error('Submission error:', error);
+        });
       }
 
       // Center the view on load
