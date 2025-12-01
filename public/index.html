@@ -503,10 +503,9 @@ fetch('/submit', {
   return response.json();
 }).then(function(data) {
   console.log('Submitted successfully!', data);
-  alert('Submitted! Check logs.');
+  location.reload();
 }).catch(function(error) {
   console.error('Submission error:', error);
-  alert('Error: ' + error);
 });
       }
 
