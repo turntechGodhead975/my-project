@@ -42,6 +42,25 @@ app.get('/image-urls', async (req, res) => {
   }
 });
 
+// Get plain text list of image URLs (for TouchDesigner Web DAT)
+app.get('/image-list', async (req, res) => {
+  try {
+    const result = await cloudinary.api.resources({
+      type: 'upload',
+      prefix: 'poetry-project/',
+      max_results: 500
+    });
+    
+    // Return URLs as plain text, one per line
+    const urlList = result.resources.map(img => img.secure_url).join('\n');
+    res.type('text/plain');
+    res.send(urlList);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Error fetching images');
+  }
+});
+
 // Store submissions
 app.post('/submit', async (req, res) => {
   try {
