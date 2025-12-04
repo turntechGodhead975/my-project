@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credits</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #credits {
+      text-align: center;
+      animation: scroll-up 30s linear forwards;
+      font-size: 24px;
+      line-height: 1.8;
+    }
+    
+    #credits h1 {
+      font-size: 64px;
+      margin-bottom: 80px;
+      font-weight: normal;
+    }
+    
+    .poem {
+      margin: 40px 0;
+    }
+    
+    .poem-text {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    
+    .poem-author {
+      font-size: 20px;
+      color: #888;
+    }
+    
+    @keyframes scroll-up {
+      from {
+        transform: translateY(100vh);
+      }
+      to {
+        transform: translateY(-100%);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="credits">
+    <h1>great! now you exist.</h1>
+    <div id="poems"></div>
+  </div>
+
+  <script>
+    // Fetch submissions
+    fetch('/submissions')
+      .then(response => response.json())
+      .then(data => {
+        const poemsDiv = document.getElementById('poems');
+        
+        data.forEach(submission => {
+          const poemDiv = document.createElement('div');
+          poemDiv.className = 'poem';
+          
+          const text = document.createElement('div');
+          text.className = 'poem-text';
+          text.textContent = submission.words.join(' ');
+          
+          const author = document.createElement('div');
+          author.className = 'poem-author';
+          author.textContent = '– ' + submission.name;
+          
+          poemDiv.appendChild(text);
+          poemDiv.appendChild(author);
+          poemsDiv.appendChild(poemDiv);
+        });
+      });
+  </script>
+</body>
+</html>

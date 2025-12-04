@@ -3,8 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const fetch = require('node-fetch');
 
-const RENDER_URL = 'https://proof-of-being.onrender.com/'; 
-const PHOTOS_DIR = path.join(__dirname, 'photos');
+const RENDER_URL = 'https://proof-of-being.onrender.com'; 
+const PHOTOS_DIR = path.join(__dirname, 'vortex-photos');
 
 // Create photos directory if it doesn't exist
 if (!fs.existsSync(PHOTOS_DIR)) {

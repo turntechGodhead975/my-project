@@ -72,18 +72,13 @@ app.post('/submit', async (req, res) => {
       public_id: `${name.replace(/[^a-z0-9]/gi, '_')}_photo`
     });
     
-    // Upload poetry to Cloudinary
-    const poetryResult = await cloudinary.uploader.upload(poetry, {
-      folder: 'poetry-project',
-      public_id: `${name.replace(/[^a-z0-9]/gi, '_')}_poetry`
-    });
+    // DON'T upload poetry image anymore - just store the words
     
     // Store submission data
     submissions.push({ 
       name, 
       photoUrl: photoResult.secure_url,
-      poetryUrl: poetryResult.secure_url,
-      words 
+      words  // Keep the words array
     });
     
     console.log('Submission saved:', name);
@@ -92,6 +87,19 @@ app.post('/submit', async (req, res) => {
     console.error('Error:', error);
     res.status(500).json({ error: 'Failed to save submission' });
   }
+});
+
+// Get credits text for TouchDesigner
+app.get('/credits-text', (req, res) => {
+  let creditsText = 'great! now you exist.\n\n\n';
+  
+  submissions.forEach(submission => {
+    const poem = submission.words.join(' ');
+    creditsText += `${poem}     – ${submission.name}\n\n`;
+  });
+  
+  res.type('text/plain');
+  res.send(creditsText);
 });
 
 const PORT = process.env.PORT || 3000;
