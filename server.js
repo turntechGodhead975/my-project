@@ -61,6 +61,19 @@ app.get('/image-list', async (req, res) => {
   }
 });
 
+// Get credits text for TouchDesigner
+app.get('/credits-text', (req, res) => {
+  let creditsText = 'great! now you exist.\n\n\n';
+  
+  submissions.forEach(submission => {
+    const poem = submission.words.join(' ');
+    creditsText += `${poem}     – ${submission.name}\n\n`;
+  });
+  
+  res.type('text/plain');
+  res.send(creditsText);
+});
+
 // Store submissions
 app.post('/submit', async (req, res) => {
   try {
@@ -87,19 +100,6 @@ app.post('/submit', async (req, res) => {
     console.error('Error:', error);
     res.status(500).json({ error: 'Failed to save submission' });
   }
-});
-
-// Get credits text for TouchDesigner
-app.get('/credits-text', (req, res) => {
-  let creditsText = 'great! now you exist.\n\n\n';
-  
-  submissions.forEach(submission => {
-    const poem = submission.words.join(' ');
-    creditsText += `${poem}     – ${submission.name}\n\n`;
-  });
-  
-  res.type('text/plain');
-  res.send(creditsText);
 });
 
 const PORT = process.env.PORT || 3000;
